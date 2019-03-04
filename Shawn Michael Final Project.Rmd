@@ -1,0 +1,887 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+# Shawn Michael  
+# MSDS 692  
+# Regis University
+# NHL Salaries Predictions 2017/2018 Stats
+
+The National Hockey League salaries during the 2017/2018 season ranged from the league min of $650,000 - $13.8 million.  The intent of the project is to model several Machine Learning techniques to predict player salaries.  In addition, to the modeling, it is also important to clean, understand and discover meaning from the dataset.
+
+NOTE: Due to the size of the legend, I have decided to include it as an imported document, into R.
+
+# Loading Libraries
+```{r message=FALSE, warning=FALSE}
+# libraries required for exploring data
+library(readr)
+library(dplyr)
+library(lattice)
+library(gmodels)
+library(ggplot2)
+library(caret)
+library(skimr)
+library(GGally)
+library(caret)
+library(rpart)
+library(rpart.plot) # loading rpart.plot to view the tree
+library(neuralnet) # Calling neuralnet library
+```
+
+# Legend File
+```{r message=FALSE, warning=FALSE}
+# importing legend as a df
+# mac book path
+# read file and assign NA to missing values
+#hockey_legend <- read.csv("~/OneDrive/Regis/MSDS 692/Final Project/Legend.csv")
+
+
+hockey_legend <- read.csv("C:/Users/shawn/OneDrive/Regis/MSDS 692/Final Project/Legend.csv")
+```
+
+# Functions
+
+```{r}
+# mean absolute error
+MAE <- function(actual, predicted) {
+  mean(abs(actual - predicted))
+}
+```
+
+
+```{r}
+# Function that returns Root Mean Squared Error
+rmse <- function(predicted, actual) {
+    sqrt(mean((predicted - actual)^2))
+}
+```
+
+# Reading Data  
+
+I have been working on both Mac and Windows through this project, therefore I would adjust my path accordingly.
+
+```{r}
+# mac book path
+# read file and assign NA to missing values
+#data <- read.csv("~/OneDrive/Regis/MSDS 692/Final Project/NHL 2017-18.csv", na = c("", "NA"))
+
+#pc path
+# read file and assign NA to missing values
+data <- read.csv("C:/Users/shawn/OneDrive/Regis/MSDS 692/Final Project/NHL 2017-18.csv",na = c("", "NA"))
+```
+
+
+```{r}
+# glimse allows to view the data quickly and in an organized manner
+glimpse(data)
+```
+
+# Data Cleaning
+
+```{r}
+# cleaning up first column name and setting it as Date
+# opening on Windows I receive unique char
+names(data)[1]<-"Born"
+
+# add the first column as date with the formatting
+data$Born <- as.Date(data$Born, "%m/%d/%Y")
+```
+
+## Identifying the columns with NA
+```{r}
+# search for document for columns with NA
+col_NA <- colnames(data)[colSums(is.na(data)) > 0]
+
+# print columns with NA
+col_NA
+```
+There are many players in the NHL that were never drafted, so this missing data is expected, therefore I will leave it as is.  The same applies to Overall (Drafted Overall)
+
+### Cleaning dataset to utilize the predictor
+
+```{r}
+#view the Salary column
+head(data$Salary)
+```
+The data is not usable in the current state ($ ,), therefore we need to clean the data in order to use it in the model.  
+
+
+```{r}
+# create a new column and replace $ with blank "" in the data$Salary column
+data$Salary1 = gsub("\\$", "", data$Salary)
+
+# remove the , from the string and convert to numeric
+data$Salary1 = as.numeric(gsub("\\,", "", data$Salary1))
+
+#view transformed data
+head(data$Salary1)
+```
+
+## Data Exploration 
+
+
+```{r}
+# search and view the players that were not drafted. DrtRd "Draft Round"
+hockey <- data %>%
+  filter(is.na(DftRd))
+
+#Display top 5 rows with DrfRd as NA
+head(hockey, 5)
+```
+
+
+```{r}
+# glimse is used in tidyverse to view the data's structure
+glimpse(data)
+```
+
+### Skim()  
+
+Using the skim function simply illustrates a number of important features about the dataset in a single view.
+```{r}
+# using skimr to view and interpret the data quickly
+skim(data)
+```
+Skimr is a fantastic package that allows to you summarize data quickly and understand many elements from a single command.
+
+### Understanding what the data is saying  
+
+```{r}
+# Example of normaized histogram using log10
+ggplot(data, aes(x = Age)) +
+  geom_histogram(bins = 21, fill="blue3")+
+  scale_x_log10()+
+  labs(subtitle = "NHL Players Age 2017/2018 Season",
+       caption="Source: 207/2018 NHL Season",
+       y = "Count",
+       x = "Age",
+       title = "Histogram")
+```
+Hockey used to be a blend of experience and youth, however you can see by the distrubution above that the NHL is highly dependant on its youthful players. This contributes to the increased speed of the game.
+
+
+```{r}
+# view players based on their Country
+goals_scored <- 
+  data %>% 
+  filter(G > 24)%>%
+  arrange(desc(G))
+```
+
+
+```{r}
+# plot salary from country with goals
+ggplot(goals_scored, aes(x = G, y = Salary1, size = G, color = Cntry)) +
+  geom_jitter()+
+  labs(subtitle = "Goals vs Salaries (Greater than 24 Goals)",
+       caption="Source: 207/2018 NHL Season",
+       y = "Salary",
+       x = "Goals",
+       title = "Scatterplot")
+```
+
+```{r}
+# create a new variable that holds rows with goals > 25
+salary_country <- data %>%
+  filter(G > 25)
+
+# plot salary from country with goals
+ggplot(salary_country, aes(x = G, y = Salary1, size = G)) +
+  geom_point()+
+  geom_smooth(method = "loess", formula = "y ~ x")+
+  labs(subtitle = "Goals vs Salaries",
+       caption="Source: 207/2018 NHL Season",
+       y = "Salary",
+       x = "Goals",
+       title = "Scatterplot")
+```
+
+Use span to control the "wiggliness" of the default loess smoother.
+The span is the fraction of points used to fit each local regression:
+Small numbers make a wigglier curve, larger numbers make a smoother curve.
+
+
+```{r}
+# plot salary from country with goals
+ggplot(salary_country, aes(x = G, y = Salary1, size = G, color = Cntry)) +
+  geom_point()+
+  geom_smooth(se = FALSE, method = lm)+
+  labs(subtitle = "Goals vs Salaries",
+       caption="Source: 207/2018 NHL Season",
+       y = "Salary",
+       x = "Goals",
+       title = "Scatterplot")
+```
+
+```{r}
+# plot salary from country with goals
+ggplot(salary_country, aes(x = G, y = Salary1, size = G, color = Cntry)) +
+  geom_point()+
+  geom_smooth(se = FALSE, method = lm)+
+  facet_wrap(~Cntry) +
+  labs(subtitle = "Goals vs Salaries",
+       caption="Source: 207/2018 NHL Season",
+       y = "Salary",
+       x = "Goals",
+       title = "Scatterplot")
+```
+
+
+
+```{r}
+# create box plots to see the range of goals per country
+ggplot(data, aes(x = Cntry, y = G))+
+  geom_boxplot(fill="lightblue")+
+      labs(subtitle = "Players Goals vs Country",
+      caption="Source: 207/2018 NHL Season",
+       y = "Goals",
+       x = "Country",
+       title = "Box Plot")
+```
+
+```{r}
+# distribution of players and their country in the NHL
+country_count <- as.data.frame(data %>% 
+  count(Cntry) %>%
+  arrange(desc(n)))
+
+# print results
+country_count 
+```
+
+
+```{r}
+# plotting the results from country_count
+ggplot(country_count, aes(x= reorder(Cntry, n), y = n)) +
+  geom_bar(stat="identity", fill = "tomato3") +
+  coord_flip()+
+    labs(subtitle = "NHL Players by County",
+      caption="Source: 207/2018 NHL Season",
+       y = "Country",
+       x = "Players",
+       title = "Bar Chart")
+  
+```
+
+
+```{r warning=FALSE}
+ggplot(data, aes(G))+
+  geom_density(aes(fill=factor(Cntry)), alpha = .8)+
+  labs(title="Density plot", 
+    subtitle="Player Goals per Country",
+    caption="Source: 207/2018 NHL Season",
+    x="Goals",
+    y = "Density",
+    fill="# Country")
+```
+
+
+```{r}
+# Goals per Country
+ggplot(data, aes(G)) +
+  geom_bar(fill="tomato3")+
+  facet_wrap(~Cntry)+
+    labs(subtitle = "Number of Goals per County",
+       caption="Source: 207/2018 NHL Season",
+       y = "Count",
+       x = "Goals",
+       title = "Facet Wrap")
+```
+
+
+```{r}
+#time on ice, goals, salary
+ggplot(data, aes(x = Salary1, y = TOI, color = G))+
+  geom_point()+
+    labs(subtitle = "Time on ICE (TOI) vs G and Salaries",
+       caption="Source: 207/2018 NHL Season",
+       y = "TOI",
+       x = "Salary",
+       title = "Scatterplot")
+```
+Time on ICE maybe directly related to salary, but maybe have a correlation when looking at all the skaters.  This is because there are shutdown defensive players that clock significant hours and minumilaly contribute to offensive totals.
+
+
+```{r message=FALSE}
+#time on ice, goals, salary
+ggplot(data = data) +
+  geom_point(mapping = aes(x= Salary1, y = TOI, color = G)) +
+  geom_smooth(mapping = aes(x = Salary1, y = TOI)) +
+  scale_x_log10()+
+      labs(subtitle = "Time on ICE (TOI) vs G and Salaries",
+       caption="Source: 207/2018 NHL Season",
+       y = "TOI",
+       x = "Salary",
+       title = "Scatterplot")
+```
+
+```{r}
+# Time on ice vs G
+ggplot(data, aes(x = TOI, y = G))+
+  geom_point()+
+  geom_smooth(method = "lm", se=F)+
+    labs(subtitle = "Time on ICE (TOI) vs G",
+       caption="Source: 207/2018 NHL Season",
+       y = "G",
+       x = "TOI",
+       title = "Scatterplot")
+```
+
+```{r}
+greater_45_PTS = data %>%
+  filter(PTS > 45)
+```
+
+```{r}
+library(scales)
+ggplot(greater_45_PTS, aes(x = Salary1, y = PTS, color = G, size = TOI))+
+  geom_point()+
+  
+  labs(subtitle = "Players Salary, Points, Goals",
+    caption="Source: 207/2018 NHL Season",
+    y = "Points",
+    x = "Salary",
+    title = "Scatterplot")
+```
+
+
+## Removing redundant variables
+
+```{r}
+cleaned_hockey <- data %>%
+  select(-Ht,
+         -Wt,
+         -Nat,
+         -DftRd,
+         -Ovrl,
+         -Debut,
+         -Seasons,
+         -Born,
+         -G.Bkhd,
+         -G.Dflct,
+         -G.Slap,
+         -G.Tip,
+         -G.Wrap,
+         -G.Wrst,
+         -G.Snap,
+         -City,
+         -FirstName,
+         -LastName, 
+         -DZS,
+         -iCF,
+         -IPPper,
+         -Cntry,
+         -sDist,
+         -PAX,
+         -PIM,
+         -BLKpercent,
+         -FirstGoal,
+         -GWG,
+         -ENG,
+         -PSA,
+         -PSG,
+         -iHDf,
+         -PlusMinus,
+         -OTG,
+         -Hat,
+         -iHF,
+         -iHA,
+         -iBLK)%>%
+  mutate(Salary = Salary1)%>%
+  select(-Salary1)
+
+# Viewing cleaning data
+glimpse(cleaned_hockey)
+```
+
+
+```{r}
+# transforming salaries into units of a million
+cleaned_hockey <- cleaned_hockey %>%
+  mutate(Salary = Salary/1000000)
+```
+
+### Grouping Salaries
+
+```{r}
+# creating salary ranges for cleaner visualization
+cleaned_hockey$grp_Salary[cleaned_hockey$Salary < .99] <- .75
+cleaned_hockey$grp_Salary[between(cleaned_hockey$Salary, 1, 1.99) ] <- 1.5
+cleaned_hockey$grp_Salary[between(cleaned_hockey$Salary, 2, 2.99) ] <- 2.5
+cleaned_hockey$grp_Salary[between(cleaned_hockey$Salary, 3, 3.99) ] <- 3.5
+cleaned_hockey$grp_Salary[between(cleaned_hockey$Salary, 4, 4.99) ] <- 4.5
+cleaned_hockey$grp_Salary[between(cleaned_hockey$Salary, 5, 5.99) ] <- 5.5
+cleaned_hockey$grp_Salary[between(cleaned_hockey$Salary, 6, 6.99) ] <- 6.5
+cleaned_hockey$grp_Salary[between(cleaned_hockey$Salary, 7, 7.99) ] <- 7.5
+cleaned_hockey$grp_Salary[between(cleaned_hockey$Salary, 8, 8.99) ] <- 8.5
+cleaned_hockey$grp_Salary[between(cleaned_hockey$Salary, 9, 9.99) ] <- 9.5
+cleaned_hockey$grp_Salary[between(cleaned_hockey$Salary, 10, 10.99) ] <- 10.5
+cleaned_hockey$grp_Salary[between(cleaned_hockey$Salary, 11, 11.99) ] <- 11.5
+cleaned_hockey$grp_Salary[between(cleaned_hockey$Salary, 12, 12.99) ] <- 12.5
+cleaned_hockey$grp_Salary[between(cleaned_hockey$Salary, 13, 13.99) ] <- 13.5
+
+# viewing the upated dataset
+skim(cleaned_hockey)
+```
+
+
+
+
+## Correlation
+
+```{r}
+# removing 3 variables for correlation
+corr_cleaned_hockey <- cleaned_hockey %>%
+  select(-Hand, -Status, -Pos, -grp_Salary)
+
+# library for creating a corr plot
+
+#
+ggcorr(corr_cleaned_hockey)
+```
+
+
+
+
+```{r}
+# loading library for plotting a correlation matrix
+library(ggcorrplot)
+
+# creating correlation matrix - Another view
+corr <- round(cor(corr_cleaned_hockey),1)
+
+# plotting a Correlogram
+ggcorrplot(corr, hc.order = TRUE,
+           type = "lower",
+           lab = TRUE,
+           lab_size = 2,
+           method = "circle",
+           colors = c("red", "white", "green"),
+           title = "Correlogram of cleaned_data",
+           ggtheme = theme_bw())
+```
+
+
+# Random Forest
+```{r warning=FALSE}
+# loading random forest package
+library(randomForest)
+library(caret)
+
+# setting seed so I am abel to reproduce tests
+set.seed(1025)
+
+# creating df for random forest
+rf_hockey <- cleaned_hockey
+
+#removing grouped salaries for the first run
+rf_hockey <- rf_hockey%>%
+  select(-grp_Salary)
+```
+
+## Creating Random Forest Model
+```{r}
+# creating random forest with 1000 trees
+rf <- randomForest(Salary~., data = rf_hockey, importance=TRUE, ntree=1000)
+rf
+```
+Based on the performance about we have about ~69% success accurately predicting NHL Salaries, based off of 2017/2018 player stats.
+
+```{r}
+plot(rf)
+```
+
+
+```{r}
+#View the most important variables
+df_importance <- sort(importance(rf)[,1], decreasing = TRUE)
+df_importance
+```
+
+```{r}
+varImpPlot(rf, n.var = 15)
+```
+OZS is when a player starts in the offensive zone for a faceoff.  You want to give your team the best chance to score by placing more most offensive players on the ice. 
+
+
+%explained variance is a measure of how well out-of-bag predictions explain the target variance of the training set. Unexplained variance would be to due true random behaviour or lack of fit.
+%explained variance is retrieved by randomForest:::print.randomForest as last element in rf.fit$rsq and multiplied with 100.
+
+
+## Second run with grouped salaries
+
+
+```{r}
+#removing grouped salaries for the first run
+rf_hockey2 <- cleaned_hockey%>%
+  select(-Salary)
+
+# creating 2nd model
+rf2 <- randomForest(grp_Salary ~., data = rf_hockey2, importance = TRUE, ntree= 400)
+rf2
+```
+I was able to increase the performance slightly using salary groups, but I was able able to reduce the amount of processessing the model has to complete. 
+
+
+```{r}
+plot(rf2)
+```
+
+
+# Decision Tree
+
+```{r}
+# creating a decision tree
+dt_hockey <- cleaned_hockey
+
+# viewing the data
+glimpse(dt_hockey)
+```
+
+```{r}
+#removing grouped salaries for the first run
+dt_hockey <- dt_hockey%>%
+  select(-grp_Salary)
+```
+
+
+```{r}
+skim(dt_hockey)
+```
+Average hockey player in the NHL in the 2017/2018 season is 2.4MM
+
+
+
+```{r}
+# last quick check for missing data
+apply(dt_hockey, 2, function(x) any(is.na(x)))
+```
+
+## Correlation Matrix
+
+```{r}
+# checking to see the corelation between common categories
+cor(dt_hockey[c("Salary", "G", "A", "PTS", "Shifts", "TOI")])
+```
+ 
+
+```{r}
+pairs(dt_hockey[c("Salary", "PTS", "TOI")])
+```
+
+```{r}
+library(psych)
+# pairs pannels pg. 192 for description
+pairs.panels(dt_hockey[c("Salary", "PTS", "TOI")])
+```
+
+## Model Training
+```{r}
+#Using seed to ensure my tests are consistant using the different models
+set.seed(1025)
+
+#creating training data with a 70/30 split
+indx = createDataPartition(dt_hockey$Salary, p = 0.7, list=FALSE)
+
+#Train and test data created
+hockeyTrain <- dt_hockey[indx, ]
+hockeyTest <- dt_hockey[-indx, ]
+
+#Creating the decision tree with our training data
+# grp_Salary is the depentant variable, 
+hockey.rpart <- rpart(Salary ~., data = hockeyTrain, method = "anova")
+
+# viewing basic information about he tree, pg 210
+hockey.rpart
+```
+
+
+```{r}
+# create regression tree
+dt <- rpart(Salary ~., data = hockeyTrain, method = "anova")
+
+# plot tree
+rpart.plot(dt, type = 1, digits = 3, shadow.col = "gray" )
+``` 
+iMiss = shots that missed the net.
+iSCF = Scoring chances by this player
+
+```{r}
+varImp(dt)
+```
+
+## Evaluating Model Performance
+```{r}
+# running test data through the model
+p.rpart <- predict(dt, hockeyTest)
+
+# printing results
+printcp(dt)
+```
+
+
+```{r}
+# lowest xerror, then at xerror and xstd for target error
+0.37778 + 0.041408
+```
+Target Error is 0.419567
+
+```{r}
+# creating two plots
+par(mfrow=c(1,2)) 
+
+# ploting dt
+rsq.rpart(dt)
+```
+The first chart shows how R-Squared is improves as the increase, since R-square gets better as it nears one.  Therefore our model is improving with each split.
+
+The second chart illustrates our decreasing errot with each split.  The fact that our error continues to near zero and does not treand upward indicates that the tree is trimed.
+
+
+```{r}
+# Evalutate the trees performance
+prediction <- 
+  predict(dt, hockeyTest, method = "anova")
+```
+
+# Prune the tree 
+```{r}
+#prune tree on the optimal CP
+optimalCP <- dt$cptable[which.min(dt$cptable[ ,"xerror"]), "CP"]
+
+#Print optimal 0.0179865
+print(optimalCP)
+```
+
+```{r}
+#prune tree
+pruneTree <- prune(dt, cp = optimalCP)
+
+#rpart.plot(tree.fit, type = 1, digits = 3)
+#Plot results
+rpart.plot(pruneTree, main = "Pruned Regression Tree",
+           tweak = 1, gap=0, type = 1, digits = 3, shadow.col = "gray")
+
+```
+
+
+```{r}
+# calling function for calculating MAE
+MAE(prediction, hockeyTest$Salary)
+```
+
+```{r}
+# calling function for calculating RMSE
+RMSE(prediction, hockeyTest$Salary)
+```
+
+
+## Decision Tree run #2 with grouped salaries  
+
+```{r}
+# remove duplicate salaries columns
+dt_hockey2<-cleaned_hockey%>%
+  select(-Salary)
+
+# to be used in another model
+nn_cleaned_hockey <- dt_hockey2
+```
+
+
+```{r}
+glimpse(dt_hockey2)
+```
+
+
+
+```{r warning=FALSE, message=FALSE}
+ggplot(dt_hockey2, aes(x = grp_Salary))+
+  geom_histogram(col= "green",
+                 fill = "blue")+
+  labs(title = "Histogram for NHL Salary Distribution 2017/2018 Season")+
+  labs(x = "NHL Salaries", y = "Player Count")+
+  xlim(c(0.4,14))
+```
+Histogram showing the distribution of salaries in the NHL 2017/2018
+
+
+```{r}
+#Using seed to ensure my tests are consistant using the different models
+set.seed(1025)
+
+#creating training data with a 70/30 split
+indx = createDataPartition(dt_hockey2$grp_Salary, p = 0.7, list=FALSE)
+
+#Train and test data created
+hockeyTrain2 <- dt_hockey2[indx, ]
+hockeyTest2 <- dt_hockey2[-indx, ]
+
+#Creating the decision tree with our training data
+# Salary is the depentant variable, 
+hockey.rpart2 <- rpart(grp_Salary ~., data = hockeyTrain2, method = "anova")
+
+# viewing basic information about he tree, pg 210
+hockey.rpart2
+```
+
+
+
+
+```{r}
+# training the second model
+dt2 <- rpart(grp_Salary ~., data = hockeyTrain2, method = "anova")
+
+# ploting second model
+rpart.plot(dt2, tweak = 1, gap=0, type = 1, shadow.col = "gray",
+           main = "NHL Salary Predictions")
+```
+
+### Evaluating Second Model Performance  
+
+```{r}
+# test model with new data
+p.rpart <- predict(dt2, hockeyTest2)
+
+# print model results
+printcp(dt2)
+```
+
+```{r}
+# calling function for calculating MAE
+MAE(p.rpart, hockeyTest2$grp_Salary)
+```
+
+```{r}
+# calling function for calculating RMSE
+RMSE(p.rpart, hockeyTest2$grp_Salary)
+```
+
+```{r}
+# create plot for R-square and X Rel error/splits
+par(mfrow=c(1,2)) 
+rsq.rpart(dt2)
+```
+The MAE and RMSE is lower in the second run, as well as the number of required splits.
+
+
+
+# Neural Networks  
+
+```{r}
+# copying data in NN place holder
+nn_hockey <- nn_cleaned_hockey
+
+# view data to determine if it needs to be normalized
+skim(nn_hockey)
+```
+Clearly looking at the dataset, you can see the requirement to normalize the data, based on features like TOI and shifts.  Since Neural Networks perform best when data is scaled close to zero, I will normalize the dataset.
+
+```{r}
+# since NN require numerical values, I will remove other values
+nn_hockey <- nn_hockey %>%
+  select(-Hand, -Pos)
+
+# changing position and
+nn_hockey$Status <- as.numeric(nn_hockey$Status)
+str(nn_hockey$Status)
+```
+### Normalizing Data  
+
+```{r}
+# function that will normalize vaules in our dataset
+normalize <- function(x){
+  return((x - min(x)) / (max(x) - min(x)))
+}
+```
+
+```{r}
+# calling the normalization function
+normalized_hockey <- as.data.frame(lapply(nn_hockey, normalize))
+
+# viewing the normalized data
+skim(normalized_hockey)
+```
+
+## Building NN Model
+```{r}
+#Setting seed to be able to reproduce the results
+set.seed(1025)
+
+#Creating 70% Training parition
+indx <- createDataPartition(normalized_hockey$grp_Salary, p= 0.7, list=FALSE)
+
+#Train and test data created
+nTrain <- normalized_hockey[indx, ]
+nTest <- normalized_hockey[-indx, ]
+
+# creating model
+nn_model <- neuralnet(grp_Salary ~ A + Age + G +  GC + GP + iGVA +iMiss +iRush + iSCF +iTKA + NZS +OZS + Pass + PTS + PTSvsGP + Shifts +
+               Status + TOff + TOI + TOIpercent + TOIvsGP, data = nTrain, stepmax = 1000000, hidden = 1, linear.output = TRUE)
+
+# plotting NN model
+plot(nn_model)
+``` 
+
+### Predicting with Neutral Networks
+```{r}
+# predict using NN
+predict_testNN <- compute(nn_model, nTest[,c(1:22)])
+```
+
+### Evaluating model performance 
+```{r}
+predicted_salary <- predict_testNN$net.result
+
+# corelating model success
+cor(predicted_salary, nTest$grp_Salary)
+```
+
+85.6% of the instances NN was able to accurately predict the appropirate salary group.
+
+```{r}
+# calling function to calculate MAE
+MAE(predict_testNN$net.result, nTest$grp_Salary)
+```
+```{r}
+# calling function to calculate RMSE
+RMSE(predict_testNN$net.result, nTest$grp_Salary)
+```
+
+
+## Model improvement
+
+```{r}
+# creating second model
+nn_model2 <- neuralnet(grp_Salary ~ A + Age + G +  GC + GP + iGVA +iMiss +iRush + iSCF +iTKA + NZS +OZS + Pass + PTS + PTSvsGP + Shifts +
+               Status + TOff + TOI + TOIpercent + TOIvsGP, data = nTrain, stepmax = 1000000, hidden = 2, linear.output = TRUE)
+
+# plotting NN model
+plot(nn_model2)
+``` 
+
+### Predicting with Neutral Networks
+```{r}
+# predict using NN
+predict_testNN2 <- compute(nn_model2, nTest[,c(1:22)])
+
+# exporting results to variable
+predicted_salary2 <- predict_testNN2$net.result
+
+# corelating model success
+cor(predicted_salary2, nTest$grp_Salary)
+```
+I tried increasing the number of hidden relationships up to 5, however in most cases my accuracy dropped while increasing the processing time of the model. 
+
+```{r}
+# Calculate MAE
+MAE(predict_testNN2$net.result, nTest$grp_Salary)
+```
+
+```{r}
+# calculate RMSE
+RMSE(predict_testNN2$net.result, nTest$grp_Salary)
+```
+
