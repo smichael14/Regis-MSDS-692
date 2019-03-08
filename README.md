@@ -21,7 +21,11 @@ The following plot depicts Salary on the y axis and Goals across the x axis.  Sc
 Facet wrap plot Goals Vs Country
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/Facet_wrap_g_cnty.png)
 
+
+BoxPlot of goals scored vs home country
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/g_cnty.png)
+
+
 
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/box_g_cnty.png)
 
