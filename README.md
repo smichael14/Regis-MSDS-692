@@ -42,7 +42,7 @@ Viewing the correlation between variables
 
 # Random Forest, Decision Tree and Neural Network Model results
 
-
+![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/results.png)
 
 
 
