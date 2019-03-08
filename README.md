@@ -7,5 +7,7 @@ Growing up in Canada one could not help but to be consumed by the sport of hocke
 
 The dataset can be acquired from http://www.hockeyabstract.com/testimonials/nhl2017-18, which amazingly thorough.  There are  ~200 variables and 881 objects representing every aspect of the game.
 
+During the exploration of the data one of the first aspects of the game that I wanted to validate.  Is the league getting younger and faster?  Are owners really interested in gambling on young players, know for timely mistakes versus proven veteran talent.  
 
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/Histogram_age.png)
+
