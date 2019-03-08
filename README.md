@@ -7,3 +7,8 @@ Growing up in Canada one could not help but to be consumed by the sport of hocke
 
 The dataset can be acquired from http://www.hockeyabstract.com/testimonials/nhl2017-18, which amazingly thorough.  There are  ~200 variables and 881 objects representing every aspect of the game.
 
+
+https://github.com/smichael14/Regis-MSDS-692/edit
+
+
+https://github.com/username/reponame/blob/master/subfolders.../filename.jpg
