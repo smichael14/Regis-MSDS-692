@@ -39,12 +39,10 @@ Plot using scale_x_log10 to expand the right skewed plot
 Viewing the correlation between variables
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/corr.png)
 
-# Creating Random Forest Model
+
+# Random Forest, Decision Tree and Neural Network Model results
 
 
-Random forest with 1000 trees
-rf <- randomForest(Salary~., data = rf_hockey, importance=TRUE, ntree=1000)
-rf
 
-![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/RF.png)
+
 
