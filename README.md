@@ -30,9 +30,10 @@ BoxPlot of goals scored vs home country
 Horizontal plot of players and their country
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/Players_cnty.png)
 
-
+Density of goals scored per country
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/density.png)
 
-![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/TOI.png)
+Plot using scale_x_log10 to expand the right skewed plot
+![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/TOI_g.png)
 
 
