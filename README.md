@@ -20,7 +20,11 @@ The following plot depicts Salary on the y axis and Goals across the x axis.  Sc
 
 
 Also this plot demonstrates the challenge in creating an accurate Salary prediction model.  If you notice between 25 and 30 goals, there are many players that are being paid large annual salaries will not scoring more that 30 goals per season.  Conversely, large amount of goals with very little in terms of annual salary.  This is why other variables have to be considered such as Age in the model creation.  Age is an indication of where a player is in their career and contribute to annual salary predictions.
- 
+
+
+
+Below is a Facet Wrap of goals scored versus their county.  In this case, Canada has recorded a large number of total goals, but remember that the league has over 50% Canadians. 
+
 Facet wrap plot Goals Vs Country
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/Facet_wrap_g_cnty.png)
 
