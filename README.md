@@ -28,6 +28,8 @@ Below is a Facet Wrap of goals scored versus their county.  In this case, Canada
 Facet wrap plot Goals Vs Country
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/Facet_wrap_g_cnty.png)
 
+The Linear Regression facet wrap visualization below separates goals per country with a third variable of salary.   
+
 Linear Regression Facet Wrap
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/g_cntry.png)
 
