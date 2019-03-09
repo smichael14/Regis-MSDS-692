@@ -54,12 +54,17 @@ Density of goals scored per country
 Plot using scale_x_log10 to expand the right skewed plot
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/TOI_g.png)
 
-As se
+The visualization below demonstrates the correlation between the variables
+
 Viewing the correlation between variables
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/corr.png)
 
 
 # Random Forest, Decision Tree and Neural Network Model results
+
+A number of iterations were completed for each model and in some instances, model performance increased.  The Random Forest was improved mainly by tree pruning, as an example.
+
+Neural Networks performed the best with this dataset, however there are other models I would run this dataset against, such as SVM or XGBoost, to explore opportunities to increase accuracy 
 
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/results.png)
 
