@@ -52,6 +52,7 @@ Density of goals scored per country
 
 
 Plot using scale_x_log10 to expand the right skewed plot
+
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/TOI_g.png)
 
 The visualization below demonstrates the correlation between the variables
