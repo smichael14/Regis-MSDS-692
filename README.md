@@ -39,15 +39,22 @@ One of my favorite illustrations is this box plot.  It demonstrates European tal
 BoxPlot of goals scored vs home country
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/box_g_cnty.png)
 
+This barplot demonstrates NHL players country representation
+
 Horizontal plot of players and their country
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/Players_cnty.png)
+
+
+This is a goal density plot, highlighting country players are from
 
 Density of goals scored per country
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/density.png)
 
+
 Plot using scale_x_log10 to expand the right skewed plot
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/TOI_g.png)
 
+As se
 Viewing the correlation between variables
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/corr.png)
 
