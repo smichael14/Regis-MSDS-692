@@ -33,6 +33,9 @@ The Linear Regression facet wrap visualization below separates goals per country
 Linear Regression Facet Wrap
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/g_cntry.png)
 
+
+One of my favorite illustrations is this box plot.  It demonstrates European talent coming over to play in the NHL are typically goal scorers.  One example of this is look at RUS, they have no outliers, yet their data stretches to ~50 goals.  Conversely, Canada has outliers beyond ~28 goals.
+
 BoxPlot of goals scored vs home country
 ![alt text](https://github.com/smichael14/Regis-MSDS-692/blob/master/box_g_cnty.png)
 
