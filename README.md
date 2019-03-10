@@ -1,6 +1,21 @@
 # Regis-MSDS-692
 Capstone 1
 
+Tools: R
+Libraries: 
+  library(readr)
+  library(dplyr)
+  library(lattice)
+  library(gmodels)
+  library(ggplot2)
+  library(caret)
+  library(skimr)
+  library(GGally)
+  library(caret)
+  library(rpart)
+  library(rpart.plot) # loading rpart.plot to view the tree
+  library(neuralnet) # Calling neuralnet library
+
 2017/2018 Season
 
 Growing up in Canada one could not help but to be consumed by the sport of hockey.  It touched every aspect of out community growing up in our small town, so over the many years, I gained a deep appreciation for the game.  Therefore when the opportunity presented itself to perform predictive modeling against National Hockey League (NHL) datasets, I jumped at the chance. 
