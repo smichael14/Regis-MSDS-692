@@ -1,5 +1,5 @@
 # Regis-MSDS-692
-Capstone 1
+Practicum 1
 
 Tools: R  
 
